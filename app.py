@@ -4,43 +4,55 @@ import streamlit as st
 import base64
 from api import getKey
 
-api_key = getKey()
-os.environ['OPENAI_API_KEY'] = api_key
-app = App()
-
-
-st.title("Study Buddy Bot...")
 
 def predict(template, prompt, chat_history):
     response = app.query(template)
     chat_history.append((prompt, response))
     return "", chat_history
 
-app.add('./data/How_linux_works.pdf', data_type='pdf_file')
-# app.add('./data/just_for_fun_linus_books.pdf', data_type='pdf_file')
+api_key = getKey()
+os.environ['OPENAI_API_KEY'] = api_key
+app = App()
 
-prompt = st.text_input("Enter You Prompt here...")
 
-template = f"""
-Act as a Linux expert. You are good at creating best curriculum, teaching students according to their weekness by developing
-basic questions about the topic. 
+if not os.path.exists("data"):
+    os.makedirs("data")
 
-PROMPT: {prompt}
-"""
+st.title("Study Buddy Bot...")
+pdf_file = st.file_uploader("Upload a PDF file", type=["pdf"])
 
-chat_history = []
+if pdf_file is not None:
+    pdf_contents = pdf_file.read()
+    pdf_b64 = base64.b64encode(pdf_contents).decode("utf-8")
+    pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_b64}" width="500" height="800"></iframe>'
+    st.sidebar.markdown(pdf_display, unsafe_allow_html=True)
 
-if st.button("Submit"):
-    if prompt:
-        _, chat_history = predict(template, prompt, chat_history)
 
-for usr_prompt, response in chat_history:
-    st.write(f"You: {usr_prompt}")
-    st.write("Chatbot:", response)
+    file_path = os.path.join("data", pdf_file.name)
+    with open(file_path, "wb") as f:
+        f.write(pdf_file.getbuffer())
 
-if st.button("Clear Chat History"):
+    app.add(file_path,data_type="pdf_file")
+
+    prompt = st.text_input("Enter your query:")
+
+    template = f"""
+    You are the expert in the given. Using the given data and your trained knowledge give us the appropriate answers. You are good at creating best curriculum, teaching students according to their weekness by developing
+    basic questions about the topic. 
+
+    PROMPT: {prompt}
+    """
+
     chat_history = []
 
-# if prompt:
-#     response = app.query(template)
-#     st.write(response)
+    # if st.button("Submit"):
+    if prompt:
+        with st.spinner("Generating..."):
+            _, chat_history = predict(template, prompt, chat_history)
+
+        for usr_prompt, response in chat_history:
+            st.write(f"You: {usr_prompt}")
+            st.write("Chatbot:", response)
+
+# if st.button("Clear Chat History"):
+#     chat_history = []
