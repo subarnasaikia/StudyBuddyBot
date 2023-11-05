@@ -45,7 +45,6 @@ if pdf_file is not None:
 
     chat_history = []
 
-    # if st.button("Submit"):
     if prompt:
         with st.spinner("Generating..."):
             _, chat_history = predict(template, prompt, chat_history)
@@ -53,6 +52,3 @@ if pdf_file is not None:
         for usr_prompt, response in chat_history:
             st.write(f"You: {usr_prompt}")
             st.write("Chatbot:", response)
-
-# if st.button("Clear Chat History"):
-#     chat_history = []
